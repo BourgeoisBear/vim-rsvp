@@ -2,6 +2,8 @@
 
 Rapid Serial Visual Presentation.  In Vim!
 
+*COMING SOON*: Documentation
+
 ### Installation
 
 ```sh
