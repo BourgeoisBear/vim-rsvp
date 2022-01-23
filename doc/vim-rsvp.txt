@@ -1,5 +1,5 @@
 vim-rsvp.txt*                                  Rapid Serial Visual Presentation
-*RSVP* *'rsvp'*
+*RSVP* *'rsvp'* *'vim-rsvp'*
 
 ===============================================================================
 USAGE
