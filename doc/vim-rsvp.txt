@@ -1,0 +1,18 @@
+vim-rsvp.txt*                                  Rapid Serial Visual Presentation
+*RSVP* *'rsvp'*
+
+===============================================================================
+USAGE
+
+  *:RsvpOn*  - begin RSVP on current buffer, start at cursor position
+  *:RsvpOff* - end RSVP
+  *:RsvpTog* - toggle between :RsvpOn and :RsvpOff
+  *:RsvpWpm* - set presentation speed (words per minute)
+
+                                                                   *'g:rsvp_wpm'*
+                                                       *'g:rsvp_popup_highlight'*
+                                                       *'g:rsvp_punct_highlight'*
+                                                             *'g:rsvp_time_func'*
+
+===============================================================================
+vim:ft=help:et:ts=2:sw=2:sts=2:norl
