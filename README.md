@@ -1,7 +1,8 @@
 ## Rapid Serial Visual Presentation Reader for Vim
 
-Why move your eyes to read--like some filthy peasant--when we have
-computers that can move the words for us?
+Why move your eyes to read&mdash;like some filthy peasant&mdash;when computers can move the words for us?
+
+![screencast](doc/tty.gif)
 
 ### Installation
 
