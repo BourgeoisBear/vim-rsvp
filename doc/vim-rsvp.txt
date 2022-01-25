@@ -7,7 +7,7 @@ INTRO                                                              *rsvp-intro*
 Why move your eyes to read--like some filthy peasant--when we have
 computers that can move the words for us?  I know, I know.
 
-"`Waaah,` `waah`!  `My` `eyes` `work` `fine`.  `I` `like` `dead` `trees`."
+`Waaah,` `waah`!  `My` `eyes` `work` `fine`.  `I` `like` `dead` `trees`.
 
 Whatever.
 
