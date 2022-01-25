@@ -1,8 +1,7 @@
-# vim-rsvp
+## Rapid Serial Visual Presentation Reader for Vim
 
-Rapid Serial Visual Presentation.  In Vim!
-
-*COMING SOON*: Documentation
+Why move your eyes to read--like some filthy peasant--when we have
+computers that can move the words for us?  I know, I know.
 
 ### Installation
 
@@ -10,4 +9,5 @@ Rapid Serial Visual Presentation.  In Vim!
   cd ~/.vim/pack/plugins/start
   git clone https://github.com/BourgeoisBear/vim-rsvp
 ```
+
 Rebuild helptags with `helptags ALL`, then see `:help vim-rsvp` for more options.

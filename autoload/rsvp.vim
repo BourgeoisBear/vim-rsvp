@@ -7,6 +7,11 @@
 "
 "
 
+
+" TODO: asciicast
+" TODO: crosspost to vim plugins
+
+
 let s:keepcpo = &cpo
 set cpo&vim
 
@@ -34,15 +39,15 @@ endfunction
 
 function! s:TimeFunc(basewait_msec, phrase)
 
-	" ADDITIONAL 50% FOR END OF SENTENCE
+	" 2x FOR END OF SENTENCE
 	if len(a:phrase) == 0
-		return (a:basewait_msec * 15) / 10
+		return a:basewait_msec * 2
 	endif
 
-	" ADDITIONAL 20% FOR OTHER PUNCTUATION
+	" ADDITIONAL 40% FOR OTHER PUNCTUATION
 	let ix = match(a:phrase, '[[:punct:]]')
 	if ix > -1
-		return (a:basewait_msec * 12) / 10
+		return (a:basewait_msec * 14) / 10
 	endif
 
 	return a:basewait_msec
@@ -88,40 +93,77 @@ endfunction
 
 function! s:RefreshPopup(next_word)
 
-	" TODO: l/r word padding
-	" TODO: highlight centroid
+	" Readers pick up information from approximately eight or nine character
+	" spaces to the right of a fixation, and four or so to the left.
+	" (Rayner & Pollatsek 1989; Robeck & Wallace 1990; Rayner & Serano 1994; Rayner 1998).
+	"
+	" LLLL_RRRRRRRRR
 
-	" HIGHLIGHT PUNCTUATION
+	const FOC_WIDTH = 14
+	const FOC_L = 4
+
 	let l_props = []
-	let d_prop = prop_type_get('pt_rsvp')
-	if !empty(d_prop) && (len(a:next_word) > 0)
+	let word    = a:next_word
+	let chars   = strdisplaywidth(word)
+	let offset  = FOC_WIDTH - chars
 
-		const RX_PUNCT = '[[:punct:]]\+'
-		let iend = 0
-		while 1
+	" HIGLIGHT "FIXATION" POINT,
+	" TRY TO KEEP START OF WORD ON SAME "FIXATION"
+	if offset >= 0
 
-			let [mstr, istart, iend] = matchstrpos(a:next_word, RX_PUNCT, iend)
-			if istart < 0 | break | endif
+		" RIGHT PAD IF TOO SHORT
+		if offset > FOC_L
+			let word = word . repeat(' ', offset - FOC_L)
+			let offset = FOC_L
+		endif
 
-			call add(l_props, {
-					\ 'col': istart + 1,
-					\ 'length': iend - istart,
-					\ 'type': 'pt_rsvp',
+		" LEFT PAD
+		let word = repeat(' ', offset) . word
+		call add(l_props, {
+					\ 'col': FOC_L + 1,
+					\ 'length': 1,
+					\ 'type': s:TEXTPROP_TYPE,
 					\ })
 
-		endwhile
+	elseif offset < 0
+
+		let offset = abs(offset)
+		let half = offset / 2
+		let odd = offset % 2
+
+		call add(l_props, {
+					\ 'col': FOC_L + 1 + half + odd,
+					\ 'length': 1,
+					\ 'type': s:TEXTPROP_TYPE,
+					\ })
 
 	endif
 
+	" HIGHLIGHT PUNCTUATION
+	const RX_PUNCT = '[[:punct:]]\+'
+	let iend = 0
+	while 1
+
+		let [mstr, istart, iend] = matchstrpos(word, RX_PUNCT, iend)
+		if istart < 0 | break | endif
+
+		call add(l_props, {
+					\ 'col': istart + 1,
+					\ 'length': iend - istart,
+					\ 'type': s:TEXTPROP_TYPE,
+					\ })
+
+	endwhile
+
 	" DISPLAY TEXT
-	call popup_settext(s:win_nr, [{ 'text': a:next_word, 'props': l_props }])
+	call popup_settext(s:win_nr, [{ 'text': word, 'props': l_props }])
 
 	" UPDATE PADDING
 	let pad_v = (&lines - 10) / 2
-	let pad_h = (&columns - 10 - strdisplaywidth(a:next_word))
+	let pad_h = (&columns - 10 - strdisplaywidth(word))
 	let odd   = pad_h % 2
 	let pad_h = pad_h / 2
-  let d_cfg = { 'padding': [pad_v, pad_h, pad_v, pad_h + odd] }
+	let d_cfg = { 'padding': [pad_v, pad_h, pad_v, pad_h + odd] }
 	call popup_setoptions(s:win_nr, d_cfg)
 
 endfunction
@@ -194,7 +236,7 @@ endfunction
 
 
 function! s:IsOn()
-  return exists('s:win_nr')
+	return exists('s:win_nr')
 endfunction
 
 
@@ -241,6 +283,8 @@ function! s:PresentKeystroke(win_id, key)
 
 	if !s:IsOn() | return 0 | endif
 
+	" call s:WriteDebugBuf([a:win_id, a:key])
+
 	if a:key ==? '?'
 		call s:HelpMsg()
 	elseif (a:key ==? 'p')
@@ -280,16 +324,18 @@ endfunction
 
 function! rsvp#Go()
 
-  let s:buf_nr  = bufnr()
+	if s:IsOn() | return | endif
+
+	let s:buf_nr  = bufnr()
 	let s:cur_tab = tabpagenr()
 	let s:last_r  = @r
 	let s:TimeFuncref = exists('g:rsvp_time_func') ?
 				\ function('g:rsvp_time_func') : function('s:TimeFunc')
 
 	" CREATE PUNCTUATION TEXTPROP TYPE
-	call prop_type_delete('pt_rsvp')
-	call prop_type_add('pt_rsvp', {
-				\ 'highlight': s:GetHl('rsvp_emphasis_hl', s:DEFAULT_EMPHASIS_HL),
+	call prop_type_delete(s:TEXTPROP_TYPE)
+	call prop_type_add(s:TEXTPROP_TYPE, {
+				\ 'highlight': s:GetHl('rsvp_focus_hl', s:DEFAULT_FOCUS_HL),
 				\ })
 
 	" CREATE NEW TAB FOR RSVP
@@ -297,17 +343,18 @@ function! rsvp#Go()
 	let s:tab_nr = tabpagenr('$')
 
 	" BEGIN
-  let d_cfg = {
-        \ 'drag': 0,
-        \ 'scrollbar': 0,
-        \ 'close': 'none',
+	let d_cfg = {
+				\ 'drag': 0,
+				\ 'scrollbar': 0,
+				\ 'close': 'none',
 				\ 'tabpage': s:tab_nr,
 				\ 'border': [],
 				\ 'highlight': s:GetHl('rsvp_popup_hl', s:DEFAULT_POPUP_HL),
 				\ 'filter': function('s:PresentKeystroke'),
-        \ }
+				\ 'mapping': 0,
+				\ }
 
-  let s:win_nr = popup_create('', d_cfg)
+	let s:win_nr = popup_create('', d_cfg)
 	call s:PresentNext(1)
 	call s:HelpMsg()
 
@@ -341,10 +388,6 @@ endfunction
 
 
 function! rsvp#Off()
-
-	if s:IsOn()
-		call s:WriteDebugBuf('cleanup')
-	endif
 
 	if exists('s:timer_id')
 		call timer_stop(s:timer_id)
@@ -391,13 +434,16 @@ endfunction
 " ---------------------------  SETUP  ---------------------------
 
 
-const s:DEFAULT_POPUP_HL      = 'DiffAdd'
-const s:DEFAULT_EMPHASIS_HL   = 'NonText'
-const s:DEFAULT_BASEWAIT_MSEC = 130
+const s:TEXTPROP_TYPE = 'rsvp_focus_txtprp'
 
-" TODO: asciicast
-" TODO: documentation
-" TODO: add popup_hl, emph_hl, wait_ms to my vimrc, remove here
+" g:rsvp_popup_hl
+const s:DEFAULT_POPUP_HL = 'Normal'
+
+" g:rsvp_focus_hl
+const s:DEFAULT_FOCUS_HL = 'Underlined'
+
+" g:rsvp_basewait_msec
+const s:DEFAULT_BASEWAIT_MSEC = 130
 
 
 function! s:GetBasewaitMsec()

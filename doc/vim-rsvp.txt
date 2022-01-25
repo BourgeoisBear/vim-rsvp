@@ -1,18 +1,100 @@
-vim-rsvp.txt*                                  Rapid Serial Visual Presentation
+*vim-rsvp.txt*                            Rapid Serial Visual Presentation Reader
 *RSVP* *'rsvp'* *'vim-rsvp'*
 
 ===============================================================================
-USAGE
+INTRO                                                                *rsvp-intro*
 
-  *:RsvpOn*  - begin RSVP on current buffer, start at cursor position
-  *:RsvpOff* - end RSVP
-  *:RsvpTog* - toggle between :RsvpOn and :RsvpOff
-  *:RsvpWpm* - set presentation speed (words per minute)
+Why move your eyes to read--like some filthy peasant--when we have
+computers that can move the words for us?  I know, I know.
+"`Waaah,` `waah`!  `My` `eyes` `work` `fine`.  `I` `like` `dead` `trees`."  Whatever.
+For those of you who already have one foot in the assisted living facility,
+you have my permission to close this window right now (`:bd!`), and enjoy
+what precious time you have left.
 
-                                                                   *'g:rsvp_wpm'*
-                                                       *'g:rsvp_popup_highlight'*
-                                                       *'g:rsvp_punct_highlight'*
+Ok, they're gone.  Wait, I'm wrong.  We have a straggler.
+
+SEMICOLON BEE DEE EXCLAMATION MARK ENTER
+
+I'll continue.  Trust me people.  Experts--some even funded by big companies--
+have spent decades studying this stuff.  There is no way you're ever
+going to read-up on all of the cool things we're putting into the water to
+turn the frickin' frogs gay (at least not in this lifetime) when you're
+still dragging your eyeballs across some dusty-ass page.
+
+It is time to make Neil DeGrasse Tyson and Bill Nye so proud of you that
+they look deeply into each other's eyes--like a proud mama and a proud papa.
+So proud, in fact, that they fondly reminisce all the way back to your
+conception, and begin lustily pawing at each other in the Hot Topic while
+you're trying to pick out a Harry Potter t-shirt and not die from
+embarrassment.  How do you do that?  You trust the science bucko, and
+you use this plugin!  That's what you do.
+
+Ok.  Now that I've just obliterated you with facts and logic, time to
+put yourself back together again so you can use this awesome plugin!
+
+Load a text into a buffer.  Place the cursor where you'd like
+to begin reading.  Issue a simple `:RsvpGo` command, and you're off!
+
+When the reader is in `active mode`, use the following keys to:
+
+        ? - display help
+        p - enter `pause mode`
+        f - go faster
+        s - go slower
+  <Esc>/q - quit
+
+When the reader is in `pause mode`, use the following keys to:
+
+      w/l - to next word
+      h/b - to previous word
+      p   - return to `active mode`
+
+These shortcuts are displayed on the message bar while the reader
+is engaged.  The cursor is advanced as each word is displayed.
+When the reader is disengaged (press `q`), the line being read
+is vertically centered with a `zz`.
+
+===============================================================================
+COMMANDS                                                          *rsvp-commands*
+
+  *:RsvpGo*   - begin RSVP on current buffer, start at cursor position
+
+  *:RsvpWait* - set base display time (in milliseconds)
+
+    " show each ordinary word for 100msec
+    :RsvpWait 100
+
+    " increase base display time by 20msec
+    :RsvpWait +20
+
+    " decrease base display time by 40msec
+    :RsvpWait -40
+
+===============================================================================
+OPTIONS                                                            *rsvp-options*
+
+
+                                                              *'g:rsvp_popup_hl'*
+Highlight group for RSVP display popup.
+Default is 'Normal'
+
+
+                                                              *'g:rsvp_focus_hl'*
+Highlight group for focal point and punctuation.
+Default is 'Underlined'
+
+
+                                                         *'g:rsvp_basewait_msec'*
+Base display time (in milliseconds).
+Default is 130ms
+
+
                                                              *'g:rsvp_time_func'*
+Optional override function to calculate display time for a given
+phrase and base display time.
+
+  function(t_number basewait_msec, t_string phrase)
+
 
 ===============================================================================
 vim:ft=help:et:ts=2:sw=2:sts=2:norl
