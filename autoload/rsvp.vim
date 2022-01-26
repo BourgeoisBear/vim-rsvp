@@ -8,10 +8,6 @@
 "
 
 
-" TODO: asciicast
-" TODO: crosspost to vim plugins
-
-
 let s:keepcpo = &cpo
 set cpo&vim
 

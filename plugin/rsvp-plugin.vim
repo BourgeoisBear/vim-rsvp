@@ -10,6 +10,16 @@
 " Reload guard and 'compatible' handling
 if exists("loaded_rsvp") | finish | endif
 
+if !has('textprop')
+  echoerr 'vim-rsvp disabled: +textprop feature not found'
+  finish
+endif
+
+if !has('popupwin')
+  echoerr 'vim-rsvp disabled: +popupwin feature not found'
+  finish
+endif
+
 let loaded_rsvp = 1
 
 let s:save_cpo = &cpo
