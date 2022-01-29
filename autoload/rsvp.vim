@@ -33,20 +33,45 @@ endfunction
 " ---------------------------  /DEBUG HELPER  ---------------------------
 
 
+function! rsvp#PunctuationCount(phrase)
+
+	let n = 0
+	let ixStart = -1
+
+	while 1
+		let ix = match(a:phrase, '[[:punct:]]', ixStart+1)
+		if (ix < 0) || (ix == ixStart) | break | endif
+		let ixStart = ix
+		let n += 1
+	endwhile
+
+	return n
+
+endfunction
+
 function! s:TimeFunc(basewait_msec, phrase)
 
-	" 2x FOR END OF SENTENCE
-	if len(a:phrase) == 0
-		return a:basewait_msec * 2
+	let base = a:basewait_msec
+	let chars = strdisplaywidth(a:phrase)
+
+	" TWO FOCUS WINDOWS WORTH OF `basewait` FOR END OF SENTENCE
+	if chars == 0
+		return base * 4
 	endif
 
-	" ADDITIONAL 40% FOR OTHER PUNCTUATION
-	let ix = match(a:phrase, '[[:punct:]]')
-	if ix > -1
-		return (a:basewait_msec * 14) / 10
+	" `basewait` FOR EACH HALF OF A FOCUS WINDOW
+	let base = round((chars * base) / (s:FOC_WIDTH * 0.5))
+
+	" CLAMP TO AT LEAST ONE `basewait`
+	if base < a:basewait_msec
+		let base = a:basewait_msec
 	endif
 
-	return a:basewait_msec
+	" ADDITIONAL 40% OF `basewait` FOR EACH PUNCTUATION
+	let n_punct = rsvp#PunctuationCount(a:phrase)
+	let base += round(n_punct * a:basewait_msec * 0.4)
+
+	return float2nr(base)
 
 endfunction
 
@@ -58,6 +83,13 @@ endfunction
 
 
 function! s:GetNextWord(bufwin_id)
+
+	" TODO: hyphen splitting
+	" 2014 | —
+	" 2015 | ―
+	" 2E3A | ⸺
+	" 2E3B | ⸻
+	" 301C | 〜
 
 	let next_word = ''
 	let l_prev = getcurpos(a:bufwin_id)
@@ -87,6 +119,8 @@ function! s:GetNextWord(bufwin_id)
 endfunction
 
 
+const s:FOC_WIDTH = 14
+
 function! s:RefreshPopup(next_word)
 
 	" Readers pick up information from approximately eight or nine character
@@ -95,13 +129,12 @@ function! s:RefreshPopup(next_word)
 	"
 	" LLLL_RRRRRRRRR
 
-	const FOC_WIDTH = 14
 	const FOC_L = 4
 
 	let l_props = []
 	let word    = a:next_word
 	let chars   = strdisplaywidth(word)
-	let offset  = FOC_WIDTH - chars
+	let offset  = s:FOC_WIDTH - chars
 
 	" HIGLIGHT "FIXATION" POINT,
 	" TRY TO KEEP START OF WORD ON SAME "FIXATION"
@@ -134,22 +167,6 @@ function! s:RefreshPopup(next_word)
 					\ })
 
 	endif
-
-	" HIGHLIGHT PUNCTUATION
-	const RX_PUNCT = '[[:punct:]]\+'
-	let iend = 0
-	while 1
-
-		let [mstr, istart, iend] = matchstrpos(word, RX_PUNCT, iend)
-		if istart < 0 | break | endif
-
-		call add(l_props, {
-					\ 'col': istart + 1,
-					\ 'length': iend - istart,
-					\ 'type': s:TEXTPROP_TYPE,
-					\ })
-
-	endwhile
 
 	" DISPLAY TEXT
 	call popup_settext(s:win_nr, [{ 'text': word, 'props': l_props }])
@@ -191,6 +208,8 @@ function! s:PresentNext(b_set_timer)
 	" GET BUFFER'S WINDOW FOR NORMAL MODE COMMANDS
 	let bufwin = win_findbuf(s:buf_nr)
 	if empty(bufwin) | return | endif
+
+" TODO: split at —
 
 	" ADVANCE CURSOR & GET NEXT NON-EMPTY WORD IN TIMER MODE,
 	" OTHERWISE, GET CURRENT WORD & LEAVE CURSOR ALONE
@@ -357,28 +376,31 @@ function! rsvp#Go()
 endfunction
 
 
-function! rsvp#SetBaseWaitMsec(val)
+function! rsvp#SetBaseWaitMsec(...)
 
-	let mtch = matchlist(a:val, '\v^([+-]?)(\d+)')
-	if len(mtch) < 3 | return | endif
+	let mtch = matchlist(get(a:, 1, ''), '\v^([+-]?)(\d+)')
+	if len(mtch) >= 3
 
-	let n_new = str2nr(mtch[2])
-	let n_msec = s:GetBasewaitMsec()
+		let n_new = str2nr(mtch[2])
+		let n_msec = s:GetBasewaitMsec()
 
-	if mtch[1] ==# '+'
-		let n_msec += n_new
-	elseif mtch[1] ==# '-'
-		let n_msec -= n_new
-	else
-		let n_msec = n_new
+		if mtch[1] ==# '+'
+			let n_msec += n_new
+		elseif mtch[1] ==# '-'
+			let n_msec -= n_new
+		else
+			let n_msec = n_new
+		endif
+
+		if n_msec < 10
+			let n_msec = 10
+		endif
+
+		let g:rsvp_basewait_msec = n_msec
+
 	endif
 
-	if n_msec < 10
-		let n_msec = 10
-	endif
-
-	let g:rsvp_basewait_msec = n_msec
-	echomsg string(n_msec) . 'msec wait'
+	echomsg string(s:GetBasewaitMsec()) . 'msec wait'
 
 endfunction
 
@@ -439,7 +461,7 @@ const s:DEFAULT_POPUP_HL = 'Normal'
 const s:DEFAULT_FOCUS_HL = 'Underlined'
 
 " g:rsvp_basewait_msec
-const s:DEFAULT_BASEWAIT_MSEC = 130
+const s:DEFAULT_BASEWAIT_MSEC = 140
 
 
 function! s:GetBasewaitMsec()

@@ -26,7 +26,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 command! RsvpGo call rsvp#Go()
-command! -nargs=1 RsvpWait call rsvp#SetBaseWaitMsec(<f-args>)
+command! -nargs=? RsvpWait call rsvp#SetBaseWaitMsec(<f-args>)
 
 " Cleanup and modelines
 let &cpo = s:save_cpo
